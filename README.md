@@ -23,3 +23,10 @@ php import.php 文件1 [文件2 文件3 ...]
 ```
 php import MOSMIX_L_2018122003_01008.kml MOSMIX_L_2018122003_06612.kml
 ```
+
+3. 如果结果中返回如下字样，表示导入成功
+
+```
+Importing MOSMIX_L_2018122003_01008.kml ...
+Importing MOSMIX_L_2018122003_06612.kml ...
+```
