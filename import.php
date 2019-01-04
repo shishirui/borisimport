@@ -66,7 +66,6 @@ class Import {
 
         $forecasts = [];
         foreach ($data[0]->ExtendedData->Forecast as $node) {
-            // $node
             $elementName = $node->attributes()->elementName->__toString();
             $values = preg_split('/\s+/', trim($node->value->__toString()));
             $forecasts['elementName' . $elementName] = $values;
@@ -75,8 +74,8 @@ class Import {
         $data = $dom->xpath('/kml/Document/Placemark/Point');
         $result['coordinates'] = $data[0]->coordinates->__toString();
 
+        // import
         foreach ($forecastTimeSteps as $k => $forecastTimeStep) {
-
             $result['ForecastTimeSteps'] = $forecastTimeStep;
             foreach ($this->forecastFields as $forecastField) {
                 $result[$forecastField] = $forecasts[$forecastField][$k];
@@ -85,7 +84,7 @@ class Import {
             $this->insertData($result);
         }
     }
-    
+
     public function insertData($data = array())
     {
         $keys = array_keys($data);
@@ -143,6 +142,3 @@ class Import {
 
 $import = new Import();
 $import->run();
-
-
-
