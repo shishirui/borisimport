@@ -2,15 +2,13 @@
 
 class Import {
 
-    public $xmlPath = './MOSMIX_L_2018122003_01008.kml';
     public $mysqlHost = 'localhost';
-    public $mysqlUsername = 'root';
-    public $mysqlPassword = 'root1234';
+    public $mysqlUsername = 'root-username';
+    public $mysqlPassword = 'root-password';
     public $mysqlDB = 'boris';
     public $mysqlTable = 'mosmix';
 
-    public $forecastFields = array(
-                                   'elementNamePPPP',
+    public $forecastFields = array('elementNamePPPP',
                                    'elementNameTTT',
                                    'elementNameFF',
                                    'elementNameN',
@@ -21,8 +19,29 @@ class Import {
 
     public function run()
     {
+        global $argv;
+
+        unset($argv[0]);
+        if (!$argv) {
+            echo "no files\n";
+            exit;
+        }
+
+        foreach ($argv as $file) {
+            if (!is_file($file)) {
+                echo "file not exists: $file\n";
+                continue;
+            }
+
+            echo "Importing $file ...\n";
+            $this->process($file);
+        }
+    }
+
+    public function process($file)
+    {
         // prepare xml
-        $xml = file_get_contents($this->xmlPath);
+        $xml = file_get_contents($file);
         $xml = preg_replace('/dwd:/', '', $xml);
         $xml = preg_replace('/kml:/', '', $xml);
 
@@ -72,15 +91,20 @@ class Import {
         $keys = array_keys($data);
         $values = array_values($data);
 
-        $sql = "INSERT INTO {$this->mysqlTable}"
-            . "('" . join("', '", $keys) . "')"
-           . " VALUES (:" . join(", :", $keys) . ")";
+        $this->createTableIfNotExists($keys);
 
-        $sth = $connection->prepare($sql);
-        foreach ($data as $k => $v) {
-            $sth->bindValue(':' . $k, $v);
+        try {
+            $sql = "INSERT INTO {$this->mysqlTable} "
+                . "(`" . join("`, `", $keys) . "`)"
+                . " VALUES (" . substr(str_repeat('?,', count($keys)), 0, -1) . ")";
+
+            $connection = $this->getConnect();
+            $sth = $connection->prepare($sql);
+            $sth->execute($values);
+            // print_r($sth->errorInfo());
+        } catch(Exception $e) {
+            echo $e->getMessage();
         }
-        $sth->execute();
     }
 
     public function getConnect()
@@ -93,7 +117,32 @@ class Import {
         return self::$connection;
     }
 
+    public function createTableIfNotExists($fields)
+    {
+        try {
+            $connection = $this->getConnect();
+            $sth = $connection->prepare("SELECT count(*) FROM {$this->mysqlTable}");
+            $sth->execute();
+            $row = $sth->fetch();
+
+            if (!$row) {
+                $lines = [];
+                foreach ($fields as $field) {
+                    $lines[] = "`$field` VARCHAR(255) NOT NULL";
+                }
+
+                $sql = "CREATE TABLE `{$this->mysqlTable}` (" .  join(', ', $lines) . ") ENGINE = InnoDB";
+                $sth = $connection->prepare($sql);
+                $sth->execute();
+            }
+        } catch(Exception $e) {
+            echo $e->getMessage();
+        }
+    }
 }
 
 $import = new Import();
 $import->run();
+
+
+
