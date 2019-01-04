@@ -2,7 +2,7 @@
 
 class Import {
 
-    public $xmlPath = './MOSMIX_L_2018122003_01008.xml';
+    public $xmlPath = './MOSMIX_L_2018122003_01008.kml';
     public $mysqlHost = 'localhost';
     public $mysqlUsername = 'root';
     public $mysqlPassword = 'root1234';
